@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 6.0 (Python 3.10.8 on win32)" generated="20221028 12:58:11.337" rpa="false" schemaversion="3">
+<suite id="s1" name="Table Level" source="C:/Users/Artem_Larin1/Desktop/DQE%20Studying/Module%205%20-%20Test%20Automation/Homework/RobotFW/Tests/table_level.robot">
+<test id="s1-t1" name="Count unique values for every column in the table. Query validates if any column populated fully null values" line="11">
+<kw name="Connect" library="DB_connection">
+<tag>AdventureWorks2014</tag>
+<kw name="Connect To Database" library="DatabaseLibrary">
+<arg>pymssql</arg>
+<arg>${DB_NAME}</arg>
+<arg>${DB_USER_NAME}</arg>
+<arg>${DB_USER_PASSWORD}</arg>
+<arg>${DB_HOST}</arg>
+<arg>${DB_PORT}</arg>
+<doc>Loads the DB API 2.0 module given `dbapiModuleName` then uses it to
+connect to the database using `dbName`, `dbUsername`, and `dbPassword`.</doc>
+<msg timestamp="20221028 12:58:11.647" level="INFO">Connecting using : pymssql.connect(database=AdventureWorks2014, user=testuser, password=Qwerty124, host=127.0.0.1, port=1433) </msg>
+<status status="PASS" starttime="20221028 12:58:11.614" endtime="20221028 12:58:11.765"/>
+</kw>
+<status status="PASS" starttime="20221028 12:58:11.613" endtime="20221028 12:58:11.765"/>
+</kw>
+<kw name="Execute Sql String" library="DatabaseLibrary">
+<arg>DECLARE @query NVARCHAR(MAX)\nselect @query = STRING_AGG(\n CAST(\n \ \ \ \ \ \ \ \ \ 'SELECT '\n \ \ \ \ \ \ \ \ \ + '''' + COLUMN_NAME + '''' + 'as column_name,' +\n+ 'COUNT(DISTINCT CAST(' + COLUMN_NAME + ' AS NVARCHAR(MAX))) as cnt_unique_values\nFROM ' + TABLE_SCHEMA + '.' + TABLE_NAME\nAS NVARCHAR(MAX)), ' UNION ALL ')\nfrom INFORMATION_SCHEMA.COLUMNS\nwhere TABLE_CATALOG='AdventureWorks2014' AND TABLE_SCHEMA = 'Person' AND TABLE_NAME = 'Address'\ndeclare @result table (column_name nvarchar(max), cnt int)\ninsert into @result\nEXEC SP_EXECUTESQL @query\nselect count(cnt) from @result where cnt = 0 \ \ \ \ \ \ \ \n</arg>
+<arg>0</arg>
+<doc>Executes the sqlString as SQL commands. Useful to pass arguments to your sql. Set optional input `sansTran` to
+True to run command without an explicit transaction commit or rollback.</doc>
+<msg timestamp="20221028 12:58:11.767" level="INFO">Executing : Execute SQL String  |  DECLARE @query NVARCHAR(MAX)
+select @query = STRING_AGG(
+ CAST(
+          'SELECT '
+          + '''' + COLUMN_NAME + '''' + 'as column_name,' +
++ 'COUNT(DISTINCT CAST(' + COLUMN_NAME + ' AS NVARCHAR(MAX))) as cnt_unique_values
+FROM ' + TABLE_SCHEMA + '.' + TABLE_NAME
+AS NVARCHAR(MAX)), ' UNION ALL ')
+from INFORMATION_SCHEMA.COLUMNS
+where TABLE_CATALOG='AdventureWorks2014' AND TABLE_SCHEMA = 'Person' AND TABLE_NAME = 'Address'
+declare @result table (column_name nvarchar(max), cnt int)
+insert into @result
+EXEC SP_EXECUTESQL @query
+select count(cnt) from @result where cnt = 0        
+ </msg>
+<status status="PASS" starttime="20221028 12:58:11.766" endtime="20221028 12:58:14.830"/>
+</kw>
+<kw name="Disconnect From Database" library="DatabaseLibrary">
+<doc>Disconnects from the database.</doc>
+<msg timestamp="20221028 12:58:14.831" level="INFO">Executing : Disconnect From Database</msg>
+<status status="PASS" starttime="20221028 12:58:14.830" endtime="20221028 12:58:14.831"/>
+</kw>
+<doc>Setup:
+Trigger Step function with [Person].[Address] table and await run finish.
+
+Test Steps:
+Run query and validate query execution result with listed in Expected result column
+
+Expected result:
+0. AdventureWorks2014 DB with [Person].[Address] table is present.
+1. Step function finished successfully.
+2. Pass result = 0, fail &lt;&gt; 0</doc>
+<tag>Person.Address</tag>
+<status status="PASS" starttime="20221028 12:58:11.609" endtime="20221028 12:58:14.832"/>
+</test>
+<test id="s1-t2" name="Query validates if PostalCode column contains invalid postal codes" line="28">
+<kw name="Connect" library="DB_connection">
+<tag>AdventureWorks2014</tag>
+<kw name="Connect To Database" library="DatabaseLibrary">
+<arg>pymssql</arg>
+<arg>${DB_NAME}</arg>
+<arg>${DB_USER_NAME}</arg>
+<arg>${DB_USER_PASSWORD}</arg>
+<arg>${DB_HOST}</arg>
+<arg>${DB_PORT}</arg>
+<doc>Loads the DB API 2.0 module given `dbapiModuleName` then uses it to
+connect to the database using `dbName`, `dbUsername`, and `dbPassword`.</doc>
+<msg timestamp="20221028 12:58:14.835" level="INFO">Connecting using : pymssql.connect(database=AdventureWorks2014, user=testuser, password=Qwerty124, host=127.0.0.1, port=1433) </msg>
+<status status="PASS" starttime="20221028 12:58:14.834" endtime="20221028 12:58:14.853"/>
+</kw>
+<status status="PASS" starttime="20221028 12:58:14.834" endtime="20221028 12:58:14.853"/>
+</kw>
+<kw name="Execute Sql String" library="DatabaseLibrary">
+<arg>SELECT SUM( CASE WHEN ISNUMERIC(pa.PostalCode) = 1 AND psp.CountryRegionCode NOT IN ('CA', 'GB') THEN 0 --for all postal codes exept Canada and GB\nWHEN pa.PostalCode LIKE '%[A-Z]%' AND pa.PostalCode LIKE '%[0-9]%' AND psp.CountryRegionCode IN ('CA', 'GB') THEN 0 --For Canada and GB\nWHEN (ISNUMERIC(pa.PostalCode) = 1 OR (CHARINDEX('-',pa.PostalCode) = 6 AND LEN(SUBSTRING(pa.PostalCode,CHARINDEX('-',pa.PostalCode)+1,LEN(pa.PostalCode))) = 4)) \nAND psp.[Name] = 'Oregon' THEN 0 --for US / Oregon\nELSE 1 END) as postal_codes_validity\nFROM [Person].[Address] pa JOIN [Person].[StateProvince] psp\non pa.StateProvinceID = psp.StateProvinceID</arg>
+<arg>0</arg>
+<doc>Executes the sqlString as SQL commands. Useful to pass arguments to your sql. Set optional input `sansTran` to
+True to run command without an explicit transaction commit or rollback.</doc>
+<msg timestamp="20221028 12:58:14.854" level="INFO">Executing : Execute SQL String  |  SELECT SUM( CASE WHEN ISNUMERIC(pa.PostalCode) = 1 AND psp.CountryRegionCode NOT IN ('CA', 'GB') THEN 0 --for all postal codes exept Canada and GB
+WHEN pa.PostalCode LIKE '%[A-Z]%' AND pa.PostalCode LIKE '%[0-9]%' AND psp.CountryRegionCode IN ('CA', 'GB') THEN 0 --For Canada and GB
+WHEN (ISNUMERIC(pa.PostalCode) = 1 OR (CHARINDEX('-',pa.PostalCode) = 6 AND LEN(SUBSTRING(pa.PostalCode,CHARINDEX('-',pa.PostalCode)+1,LEN(pa.PostalCode))) = 4)) 
+AND psp.[Name] = 'Oregon' THEN 0 --for US / Oregon
+ELSE 1 END) as postal_codes_validity
+FROM [Person].[Address] pa JOIN [Person].[StateProvince] psp
+on pa.StateProvinceID = psp.StateProvinceID </msg>
+<status status="PASS" starttime="20221028 12:58:14.854" endtime="20221028 12:58:14.905"/>
+</kw>
+<kw name="Disconnect From Database" library="DatabaseLibrary">
+<doc>Disconnects from the database.</doc>
+<msg timestamp="20221028 12:58:14.906" level="INFO">Executing : Disconnect From Database</msg>
+<status status="PASS" starttime="20221028 12:58:14.906" endtime="20221028 12:58:14.907"/>
+</kw>
+<doc>Setup:
+Trigger Step function with [Person].[Address] table and await run finish.
+
+Test Steps:
+Run query and validate query execution result with listed in Expected result column
+
+Expected result:
+0. AdventureWorks2014 DB with [Person].[Address] table is present.
+1. Step function finished successfully.
+2. Pass result = 0, fail &lt;&gt; 0</doc>
+<tag>Person.Address</tag>
+<status status="PASS" starttime="20221028 12:58:14.833" endtime="20221028 12:58:14.908"/>
+</test>
+<test id="s1-t3" name="Query validates if Status column MAX and MIN value corresponds to required" line="44">
+<kw name="Connect" library="DB_connection">
+<tag>AdventureWorks2014</tag>
+<kw name="Connect To Database" library="DatabaseLibrary">
+<arg>pymssql</arg>
+<arg>${DB_NAME}</arg>
+<arg>${DB_USER_NAME}</arg>
+<arg>${DB_USER_PASSWORD}</arg>
+<arg>${DB_HOST}</arg>
+<arg>${DB_PORT}</arg>
+<doc>Loads the DB API 2.0 module given `dbapiModuleName` then uses it to
+connect to the database using `dbName`, `dbUsername`, and `dbPassword`.</doc>
+<msg timestamp="20221028 12:58:14.912" level="INFO">Connecting using : pymssql.connect(database=AdventureWorks2014, user=testuser, password=Qwerty124, host=127.0.0.1, port=1433) </msg>
+<status status="PASS" starttime="20221028 12:58:14.911" endtime="20221028 12:58:14.927"/>
+</kw>
+<status status="PASS" starttime="20221028 12:58:14.910" endtime="20221028 12:58:14.928"/>
+</kw>
+<kw name="Execute Sql String" library="DatabaseLibrary">
+<arg>select \nCASE WHEN MAX([Status]) = 3 AND MIN([Status]) = 1 THEN 1 ELSE 0 END as Status_min_max\nFROM [Production].[Document]</arg>
+<arg>0</arg>
+<doc>Executes the sqlString as SQL commands. Useful to pass arguments to your sql. Set optional input `sansTran` to
+True to run command without an explicit transaction commit or rollback.</doc>
+<msg timestamp="20221028 12:58:14.928" level="INFO">Executing : Execute SQL String  |  select 
+CASE WHEN MAX([Status]) = 3 AND MIN([Status]) = 1 THEN 1 ELSE 0 END as Status_min_max
+FROM [Production].[Document] </msg>
+<status status="PASS" starttime="20221028 12:58:14.928" endtime="20221028 12:58:14.941"/>
+</kw>
+<kw name="Disconnect From Database" library="DatabaseLibrary">
+<doc>Disconnects from the database.</doc>
+<msg timestamp="20221028 12:58:14.942" level="INFO">Executing : Disconnect From Database</msg>
+<status status="PASS" starttime="20221028 12:58:14.942" endtime="20221028 12:58:14.943"/>
+</kw>
+<doc>Setup:
+Trigger Step function with [Production].[Document] table and await run finish.
+
+Test Steps:
+Run query and validate query execution result with listed in Expected result column
+
+Expected result:
+0. AdventureWorks2014 DB with [Production].[Document] table is present.
+1. Step function finished successfully.
+2. Pass result = 0, fail &lt;&gt; 0</doc>
+<tag>[Production].[Document]</tag>
+<status status="PASS" starttime="20221028 12:58:14.909" endtime="20221028 12:58:14.943"/>
+</test>
+<test id="s1-t4" name="Query validates if FolderFlag column assigned correctly" line="61">
+<kw name="Connect" library="DB_connection">
+<tag>AdventureWorks2014</tag>
+<kw name="Connect To Database" library="DatabaseLibrary">
+<arg>pymssql</arg>
+<arg>${DB_NAME}</arg>
+<arg>${DB_USER_NAME}</arg>
+<arg>${DB_USER_PASSWORD}</arg>
+<arg>${DB_HOST}</arg>
+<arg>${DB_PORT}</arg>
+<doc>Loads the DB API 2.0 module given `dbapiModuleName` then uses it to
+connect to the database using `dbName`, `dbUsername`, and `dbPassword`.</doc>
+<msg timestamp="20221028 12:58:14.948" level="INFO">Connecting using : pymssql.connect(database=AdventureWorks2014, user=testuser, password=Qwerty124, host=127.0.0.1, port=1433) </msg>
+<status status="PASS" starttime="20221028 12:58:14.946" endtime="20221028 12:58:14.966"/>
+</kw>
+<status status="PASS" starttime="20221028 12:58:14.945" endtime="20221028 12:58:14.966"/>
+</kw>
+<kw name="Execute Sql String" library="DatabaseLibrary">
+<arg>SELECT COUNT(*) FROM\n(SELECT DocumentNode, CAST(FolderFlag as INT) as FolderFlag FROM [Production].[Document]\nEXCEPT\nSELECT DocumentNode, CAST(CASE WHEN PATINDEX('%.%',[FileName]) = 0 THEN 1 ELSE 0 END as INT) as FolderFlag \nFROM [Production].[Document])tbl</arg>
+<arg>0</arg>
+<doc>Executes the sqlString as SQL commands. Useful to pass arguments to your sql. Set optional input `sansTran` to
+True to run command without an explicit transaction commit or rollback.</doc>
+<msg timestamp="20221028 12:58:14.967" level="INFO">Executing : Execute SQL String  |  SELECT COUNT(*) FROM
+(SELECT DocumentNode, CAST(FolderFlag as INT) as FolderFlag FROM [Production].[Document]
+EXCEPT
+SELECT DocumentNode, CAST(CASE WHEN PATINDEX('%.%',[FileName]) = 0 THEN 1 ELSE 0 END as INT) as FolderFlag 
+FROM [Production].[Document])tbl </msg>
+<status status="PASS" starttime="20221028 12:58:14.967" endtime="20221028 12:58:14.975"/>
+</kw>
+<kw name="Disconnect From Database" library="DatabaseLibrary">
+<doc>Disconnects from the database.</doc>
+<msg timestamp="20221028 12:58:14.976" level="INFO">Executing : Disconnect From Database</msg>
+<status status="PASS" starttime="20221028 12:58:14.976" endtime="20221028 12:58:14.977"/>
+</kw>
+<doc>Setup:
+Trigger Step function with [Production].[Document] table and await run finish.
+
+Test Steps:
+Run query and validate query execution result with listed in Expected result column
+
+Expected result:
+0. AdventureWorks2014 DB with [Production].[Document] table is present.
+1. Step function finished successfully.
+2. Pass result = 0, fail &lt;&gt; 0</doc>
+<tag>[Production].[Document]</tag>
+<status status="PASS" starttime="20221028 12:58:14.944" endtime="20221028 12:58:14.977"/>
+</test>
+<test id="s1-t5" name="Query validates if UnitMeasureCode column values contain only upper case characters" line="78">
+<kw name="Connect" library="DB_connection">
+<tag>AdventureWorks2014</tag>
+<kw name="Connect To Database" library="DatabaseLibrary">
+<arg>pymssql</arg>
+<arg>${DB_NAME}</arg>
+<arg>${DB_USER_NAME}</arg>
+<arg>${DB_USER_PASSWORD}</arg>
+<arg>${DB_HOST}</arg>
+<arg>${DB_PORT}</arg>
+<doc>Loads the DB API 2.0 module given `dbapiModuleName` then uses it to
+connect to the database using `dbName`, `dbUsername`, and `dbPassword`.</doc>
+<msg timestamp="20221028 12:58:14.980" level="INFO">Connecting using : pymssql.connect(database=AdventureWorks2014, user=testuser, password=Qwerty124, host=127.0.0.1, port=1433) </msg>
+<status status="PASS" starttime="20221028 12:58:14.979" endtime="20221028 12:58:14.995"/>
+</kw>
+<status status="PASS" starttime="20221028 12:58:14.978" endtime="20221028 12:58:14.996"/>
+</kw>
+<kw name="Execute Sql String" library="DatabaseLibrary">
+<arg>SELECT COUNT(*) as cnt FROM [Production].[UnitMeasure]\nWHERE UPPER([UnitMeasureCode]) COLLATE Latin1_General_CS_AS != [UnitMeasureCode]</arg>
+<arg>0</arg>
+<doc>Executes the sqlString as SQL commands. Useful to pass arguments to your sql. Set optional input `sansTran` to
+True to run command without an explicit transaction commit or rollback.</doc>
+<msg timestamp="20221028 12:58:14.996" level="INFO">Executing : Execute SQL String  |  SELECT COUNT(*) as cnt FROM [Production].[UnitMeasure]
+WHERE UPPER([UnitMeasureCode]) COLLATE Latin1_General_CS_AS != [UnitMeasureCode] </msg>
+<status status="PASS" starttime="20221028 12:58:14.996" endtime="20221028 12:58:15.003"/>
+</kw>
+<kw name="Disconnect From Database" library="DatabaseLibrary">
+<doc>Disconnects from the database.</doc>
+<msg timestamp="20221028 12:58:15.004" level="INFO">Executing : Disconnect From Database</msg>
+<status status="PASS" starttime="20221028 12:58:15.004" endtime="20221028 12:58:15.005"/>
+</kw>
+<doc>Setup:
+Trigger Step function with [Production].[UnitMeasure] table and await run finish.
+
+Test Steps:
+Run query and validate query execution result with listed in Expected result column
+
+Expected result:
+0. AdventureWorks2014 DB with [Production].[UnitMeasure] table is present.
+1. Step function finished successfully.
+2. Pass result = 0, fail &lt;&gt; 0</doc>
+<tag>[Production].[UnitMeasure]</tag>
+<status status="PASS" starttime="20221028 12:58:14.978" endtime="20221028 12:58:15.005"/>
+</test>
+<test id="s1-t6" name="Query validates if Name column mapped accordingly to UnitMeasureCode and does not contain duplicates" line="95">
+<kw name="Connect" library="DB_connection">
+<tag>AdventureWorks2014</tag>
+<kw name="Connect To Database" library="DatabaseLibrary">
+<arg>pymssql</arg>
+<arg>${DB_NAME}</arg>
+<arg>${DB_USER_NAME}</arg>
+<arg>${DB_USER_PASSWORD}</arg>
+<arg>${DB_HOST}</arg>
+<arg>${DB_PORT}</arg>
+<doc>Loads the DB API 2.0 module given `dbapiModuleName` then uses it to
+connect to the database using `dbName`, `dbUsername`, and `dbPassword`.</doc>
+<msg timestamp="20221028 12:58:15.010" level="INFO">Connecting using : pymssql.connect(database=AdventureWorks2014, user=testuser, password=Qwerty124, host=127.0.0.1, port=1433) </msg>
+<status status="PASS" starttime="20221028 12:58:15.008" endtime="20221028 12:58:15.027"/>
+</kw>
+<status status="PASS" starttime="20221028 12:58:15.007" endtime="20221028 12:58:15.028"/>
+</kw>
+<kw name="Execute Sql String" library="DatabaseLibrary">
+<arg>SELECT COUNT(*) as result FROM\n(SELECT [Name], COUNT(*) OVER (PARTITION BY UnitMeasureCode) cnt\nFROM [Production].[UnitMeasure]\nGROUP BY UnitMeasureCode, [Name]\n)tbl\nWHERE cnt &lt;&gt; 1</arg>
+<arg>0</arg>
+<doc>Executes the sqlString as SQL commands. Useful to pass arguments to your sql. Set optional input `sansTran` to
+True to run command without an explicit transaction commit or rollback.</doc>
+<msg timestamp="20221028 12:58:15.029" level="INFO">Executing : Execute SQL String  |  SELECT COUNT(*) as result FROM
+(SELECT [Name], COUNT(*) OVER (PARTITION BY UnitMeasureCode) cnt
+FROM [Production].[UnitMeasure]
+GROUP BY UnitMeasureCode, [Name]
+)tbl
+WHERE cnt &lt;&gt; 1 </msg>
+<status status="PASS" starttime="20221028 12:58:15.029" endtime="20221028 12:58:15.039"/>
+</kw>
+<kw name="Disconnect From Database" library="DatabaseLibrary">
+<doc>Disconnects from the database.</doc>
+<msg timestamp="20221028 12:58:15.040" level="INFO">Executing : Disconnect From Database</msg>
+<status status="PASS" starttime="20221028 12:58:15.039" endtime="20221028 12:58:15.041"/>
+</kw>
+<doc>Setup:
+Trigger Step function with [Production].[UnitMeasure] table and await run finish.
+
+Test Steps:
+Run query and validate query execution result with listed in Expected result column
+
+Expected result:
+0. AdventureWorks2014 DB with [Production].[UnitMeasure] table is present.
+1. Step function finished successfully.
+2. Pass result = 0, fail &lt;&gt; 0</doc>
+<tag>[Production].[UnitMeasure]</tag>
+<status status="PASS" starttime="20221028 12:58:15.006" endtime="20221028 12:58:15.042"/>
+</test>
+<doc>SQL Table Level Tests</doc>
+<status status="PASS" starttime="20221028 12:58:11.343" endtime="20221028 12:58:15.044"/>
+</suite>
+<statistics>
+<total>
+<stat pass="6" fail="0" skip="0">All Tests</stat>
+</total>
+<tag>
+<stat pass="2" fail="0" skip="0">[Production].[Document]</stat>
+<stat pass="2" fail="0" skip="0">[Production].[UnitMeasure]</stat>
+<stat pass="2" fail="0" skip="0">Person.Address</stat>
+</tag>
+<suite>
+<stat pass="6" fail="0" skip="0" id="s1" name="Table Level">Table Level</stat>
+</suite>
+</statistics>
+<errors>
+</errors>
+</robot>
