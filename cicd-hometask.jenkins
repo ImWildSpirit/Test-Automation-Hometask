@@ -1,0 +1,33 @@
+pipeline {
+   agent any
+
+   stages {
+	
+		stage('PyTest DB Connection') {
+			steps{      
+				bat 'python PyTest/Resources/DB_connection.py'
+			}
+        }
+		
+		stage('PyTest DB Testing') {
+			steps{      
+				bat 'python PyTest/Tests/database_tests.py'
+				bat 'python PyTest/Tests/generate_report.py'
+			}
+        }
+		
+		
+		stage('Robot DB Connection') {
+			steps{      
+				bat 'robot RobotFW/Resources/DB_connection.robot
+			}
+        }
+		
+		stage('Robot DB Testing') {
+			steps{      
+				bat 'robot RobotFW/Tests/table_level.robot
+			}
+        }
+
+  }
+}
