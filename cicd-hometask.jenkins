@@ -2,13 +2,6 @@ pipeline {
    agent any
 
    stages {
-	
-		stage('PyTest DB Connection') {
-			steps{      
-				sh 'pytest PyTest/Resources/DB_connection.py'
-			}
-        }
-		
 		stage('PyTest DB Testing') {
 			steps{      
 				sh 'pytest PyTest/Tests/database_tests.py'
