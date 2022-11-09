@@ -5,14 +5,14 @@ pipeline {
 	
 		stage('PyTest DB Connection') {
 			steps{      
-				bat 'python PyTest/Resources/DB_connection.py'
+				bat 'pytest PyTest/Resources/DB_connection.py'
 			}
         }
 		
 		stage('PyTest DB Testing') {
 			steps{      
-				bat 'python PyTest/Tests/database_tests.py'
-				bat 'python PyTest/Tests/generate_report.py'
+				bat 'pytest PyTest/Tests/database_tests.py'
+				bat 'pytest PyTest/Tests/generate_report.py'
 			}
         }
 		
