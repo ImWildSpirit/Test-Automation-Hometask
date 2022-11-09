@@ -5,27 +5,27 @@ pipeline {
 	
 		stage('PyTest DB Connection') {
 			steps{      
-				bat 'pytest PyTest/Resources/DB_connection.py'
+				sh 'pytest PyTest/Resources/DB_connection.py'
 			}
         }
 		
 		stage('PyTest DB Testing') {
 			steps{      
-				bat 'pytest PyTest/Tests/database_tests.py'
-				bat 'pytest PyTest/Tests/generate_report.py'
+				sh 'pytest PyTest/Tests/database_tests.py'
+				sh 'pytest PyTest/Tests/generate_report.py'
 			}
         }
 		
 		
 		stage('Robot DB Connection') {
 			steps{      
-				bat 'robot RobotFW/Resources/DB_connection.robot'
+				sh 'robot RobotFW/Resources/DB_connection.robot'
 			}
         }
 		
 		stage('Robot DB Testing') {
 			steps{      
-				bat 'robot RobotFW/Tests/table_level.robot'
+				sh 'robot RobotFW/Tests/table_level.robot'
 			}
         }
 
