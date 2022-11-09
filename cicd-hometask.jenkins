@@ -19,13 +19,13 @@ pipeline {
 		
 		stage('Robot DB Connection') {
 			steps{      
-				bat 'robot RobotFW/Resources/DB_connection.robot
+				bat 'robot RobotFW/Resources/DB_connection.robot'
 			}
         }
 		
 		stage('Robot DB Testing') {
 			steps{      
-				bat 'robot RobotFW/Tests/table_level.robot
+				bat 'robot RobotFW/Tests/table_level.robot'
 			}
         }
 
