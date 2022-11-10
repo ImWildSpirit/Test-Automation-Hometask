@@ -2,17 +2,19 @@ pipeline {
    agent any
 
    stages {
+		stage('Preparation') {
+			steps{      
+				sh 'python --version'
+				sh 'pytest --ersion'
+				sh 'robot --version'
+				echo 'Good to go'
+			}
+        }
+		
 		stage('PyTest DB Testing') {
 			steps{      
 				sh 'pytest PyTest/Tests/database_tests.py'
 				sh 'pytest PyTest/Tests/generate_report.py'
-			}
-        }
-		
-		
-		stage('Robot DB Connection') {
-			steps{      
-				sh 'robot RobotFW/Resources/DB_connection.robot'
 			}
         }
 		
