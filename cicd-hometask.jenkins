@@ -4,7 +4,6 @@ pipeline {
    stages {
 		stage('Preparation') {
 			steps{      
-				sh 'python --version'
 				sh 'pytest --ersion'
 				sh 'robot --version'
 				echo 'Good to go'
